@@ -7,10 +7,11 @@ import config
 __SendKey = config.send_key
 
 
-def wx_send(title=' ', content=' '):
+def wx_send(title=' ', content=' ', uid=''):
     requests.get(
         "https://sctapi.ftqq.com/"+__SendKey+".send",
-        params={"title": title, 'desp': content})
+        params={"title": title, 'desp': content, 'openid': uid})
+
 
 
 if __name__ == '__main__':

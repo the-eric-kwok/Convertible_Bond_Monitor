@@ -43,7 +43,7 @@ def main():
                     Bond.Bond(item["SNAME"], item["BONDCODE"], item["ZGJ"], item["SWAPPRICE"]))
 
     wx_msg = '\n'
-    wx_msg += '今日发售债券：\n\n'
+    wx_msg += '今日发售：\n\n'
 
     if len(today_bond) > 0:
         for bond in today_bond:
@@ -51,7 +51,7 @@ def main():
                 wx_msg += '- 债券代码：%s，债券简称：%s，正股价：%s，转股价：%s, 转股价值：%.2f' % (
                     bond.code, bond.name, bond.price, bond.swap_price, bond.swap_value)
                 if bond.swap_value > 90:
-                    wx_msg += ' **推荐申购✅**'
+                    wx_msg += '  推荐✅'
             else:
                 wx_msg += '- 债券代码：%s，债券简称：%s，正股价：%s，转股价：%s, 转股价值：%s' % (
                     bond.code, bond.name, bond.price, bond.swap_price, bond.swap_value)
@@ -59,17 +59,17 @@ def main():
     else:
         wx_msg += '- 无\n\n'
 
-    wx_msg += '今日上市债券：\n\n'
+    wx_msg += '今日上市：\n\n'
     if len(shangshi_bond) > 0:
         for bond in shangshi_bond:
             wx_msg += '- 债券代码：% s，债券简称：% s\n\n' % (bond.code, bond.name)
     else:
         wx_msg += '- 无\n\n'
 
-    if '今日发售债券' in wx_msg or '今日上市债券' in wx_msg:
-        wx_msg += '<a href="%s">点这里查看可转债一览表</a>' % TARGET_URL
+    if '今日发售' in wx_msg or '今日上市' in wx_msg:
+        wx_msg += '<a href="%s">点击查看一览表</a>' % TARGET_URL
         log(wx_msg)
-        wx_send.wx_send(title='每日可转债推送', content=wx_msg)
+        wx_send.wx_send(title='每日可转债', content=wx_msg)
     else:
         log("今日无可转债发行或上市")
 
