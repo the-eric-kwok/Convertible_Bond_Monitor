@@ -2,16 +2,18 @@
 # encoding: utf-8
 
 import requests
-import config
-
-__SendKey = config.send_key
+try:
+    import config
+    __SendKey = config.send_key
+except:
+    __SendKey = None
 
 
 def wx_send(title=' ', content=' ', uid=''):
-    requests.get(
-        "https://sctapi.ftqq.com/"+__SendKey+".send",
-        params={"title": title, 'desp': content, 'openid': uid})
-
+    if __SendKey is not None:
+        requests.get(
+            "https://sctapi.ftqq.com/"+__SendKey+".send",
+            params={"title": title, 'desp': content, 'openid': uid})
 
 
 if __name__ == '__main__':

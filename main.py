@@ -8,7 +8,14 @@ import json
 import time
 import Bond
 
-TARGET_URL = "http://data.eastmoney.com/kzz/default.html"
+TARGET_URL = "http://datacenter-web.eastmoney.com/api/data/v1/get"
+PARAMS = {
+    'reportName': "RPT_BOND_CB_LIST",
+    'columns': "ALL",
+    'quoteColumns': "f229~10~SECURITY_CODE~CONVERT_STOCK_PRICE,f235~10~SECURITY_CODE~TRANSFER_PRICE,f236~10~SECURITY_CODE~TRANSFER_VALUE,f2~10~SECURITY_CODE~CURRENT_BOND_PRICE,f237~10~SECURITY_CODE~TRANSFER_PREMIUM_RATIO,f239~10~SECURITY_CODE~RESALE_TRIG_PRICE,f240~10~SECURITY_CODE~REDEEM_TRIG_PRICE,f23~01~CONVERT_STOCK_CODE~PBV_RATIO",
+    'source': "WEB",
+    'client': "WEB"
+}
 
 
 def log(string):
@@ -19,28 +26,28 @@ def log(string):
 
 
 def main():
-    req = requests.get(TARGET_URL)
-    match = re.search('defjson:\{pages:.*?,data:(\[.*?\])', req.text).group(1)
-    js = json.loads(match)
+    req = requests.get(TARGET_URL, params=PARAMS)
+    js = json.loads(req.text)
+    data = js["result"]["data"]
     today_bond = []
     shangshi_bond = []
-    for item in js:
-        if item['STARTDATE'] != '-':
-            start_date = item['STARTDATE'].split('T')[0].split('-')
+    for item in data:
+        if item['PUBLIC_START_DATE'] is not None:
+            start_date = item['PUBLIC_START_DATE'].split(' ')[0].split('-')
             year = start_date[0]
             month = start_date[1]
             day = start_date[2]
             if int(year) == time.localtime().tm_year and int(month) == time.localtime().tm_mon and int(day) == time.localtime().tm_mday:
                 today_bond.append(
-                    Bond.Bond(item["SNAME"], item["BONDCODE"], item["ZGJ"], item["SWAPPRICE"]))
-        if item['LISTDATE'] != '-':
-            list_date = item['LISTDATE'].split('T')[0].split('-')
+                    Bond.Bond(item["SECURITY_NAME_ABBR"], item["SECURITY_CODE"], item["CONVERT_STOCK_PRICE"], item["TRANSFER_PRICE"]))
+        if item['BOND_START_DATE'] is not None:
+            list_date = item['BOND_START_DATE'].split(' ')[0].split('-')
             year = list_date[0]
             month = list_date[1]
             day = list_date[2]
             if int(year) == time.localtime().tm_year and int(month) == time.localtime().tm_mon and int(day) == time.localtime().tm_mday:
                 shangshi_bond.append(
-                    Bond.Bond(item["SNAME"], item["BONDCODE"], item["ZGJ"], item["SWAPPRICE"]))
+                    Bond.Bond(item["SECURITY_NAME_ABBR"], item["SECURITY_CODE"], item["CONVERT_STOCK_PRICE"], item["TRANSFER_PRICE"]))
 
     wx_msg = '\n'
     wx_msg += '今日发售：\n\n'
