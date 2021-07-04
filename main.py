@@ -8,6 +8,7 @@ import json
 import time
 import Bond
 
+PAGE_URL = "http://data.eastmoney.com/kzz/default.html"
 TARGET_URL = "http://datacenter-web.eastmoney.com/api/data/v1/get"
 PARAMS = {
     'reportName': "RPT_BOND_CB_LIST",
@@ -74,7 +75,7 @@ def main():
         wx_msg += '- 无\n\n'
 
     if '今日发售' in wx_msg or '今日上市' in wx_msg:
-        wx_msg += '<a href="%s">点击查看一览表</a>' % TARGET_URL
+        wx_msg += '[点击详情查看一览表](%s)' % PAGE_URL
         log(wx_msg)
         wx_send.wx_send(title='每日可转债', content=wx_msg)
     else:
