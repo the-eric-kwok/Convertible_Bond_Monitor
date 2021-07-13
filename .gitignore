@@ -1,3 +1,4 @@
 config.py
 .history
 __pycache__
+.vscode

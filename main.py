@@ -3,9 +3,8 @@
 
 import wx_send
 import requests
-import re
 import json
-import time
+import datetime
 import Bond
 
 PAGE_URL = "http://data.eastmoney.com/kzz/default.html"
@@ -21,7 +20,7 @@ PARAMS = {
 
 def log(string):
     for line in string.splitlines():
-        now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         line = "[%s] %s" % (now, line)
         print(line)
 
@@ -30,51 +29,61 @@ def main():
     req = requests.get(TARGET_URL, params=PARAMS)
     js = json.loads(req.text)
     data = js["result"]["data"]
-    today_bond = []
-    shangshi_bond = []
+    recently_public_bonds = []
+    recently_listing_bonds = []
+    today = datetime.date.today()
+    dayRel = ["今天", "明天", "后天"]
     for item in data:
         if item['PUBLIC_START_DATE'] is not None:
-            start_date = item['PUBLIC_START_DATE'].split(' ')[0].split('-')
-            year = start_date[0]
-            month = start_date[1]
-            day = start_date[2]
-            if int(year) == time.localtime().tm_year and int(month) == time.localtime().tm_mon and int(day) == time.localtime().tm_mday:
-                today_bond.append(
-                    Bond.Bond(item["SECURITY_NAME_ABBR"], item["SECURITY_CODE"], item["CONVERT_STOCK_PRICE"], item["TRANSFER_PRICE"]))
-        if item['BOND_START_DATE'] is not None:
-            list_date = item['BOND_START_DATE'].split(' ')[0].split('-')
-            year = list_date[0]
-            month = list_date[1]
-            day = list_date[2]
-            if int(year) == time.localtime().tm_year and int(month) == time.localtime().tm_mon and int(day) == time.localtime().tm_mday:
-                shangshi_bond.append(
-                    Bond.Bond(item["SECURITY_NAME_ABBR"], item["SECURITY_CODE"], item["CONVERT_STOCK_PRICE"], item["TRANSFER_PRICE"]))
+            start_date = datetime.datetime.strptime(
+                item['PUBLIC_START_DATE'], '%Y-%m-%d %H:%M:%S').date()
+            gap = (start_date - today).days
+            if gap >= 0 and gap < 3:
+                recently_public_bonds.append(
+                    Bond.Bond(item["SECURITY_NAME_ABBR"], item["SECURITY_CODE"], item["CONVERT_STOCK_PRICE"], item["TRANSFER_PRICE"], item['PUBLIC_START_DATE'], item['LISTING_DATE']))
+        if item['LISTING_DATE'] is not None:
+            list_date = datetime.datetime.strptime(
+                item['BOND_START_DATE'], '%Y-%m-%d %H:%M:%S').date()
+            gap = (list_date - today).days
+            if gap >= 0 and gap < 2:
+                recently_listing_bonds.append(
+                    Bond.Bond(item["SECURITY_NAME_ABBR"], item["SECURITY_CODE"], item["CONVERT_STOCK_PRICE"], item["TRANSFER_PRICE"], item['PUBLIC_START_DATE'], item['LISTING_DATE']))
 
     wx_msg = '\n'
-    wx_msg += '今日发售：\n\n'
-
-    if len(today_bond) > 0:
-        for bond in today_bond:
-            if bond.price != "-" and bond.price != "-":
-                wx_msg += '- 债券代码：%s，债券简称：%s，正股价：%s，转股价：%s, 转股价值：%.2f' % (
-                    bond.code, bond.name, bond.price, bond.swap_price, bond.swap_value)
-                if bond.swap_value > 90:
+    wx_msg += '近日发售：\n\n'
+    if len(recently_public_bonds) > 0:
+        for bond in recently_public_bonds:
+            if bond.public_start_date is not None:
+                gap = (bond.public_start_date - today).days
+                if gap < len(dayRel):
+                    wx_msg += '- %s: 债券代码：%s，债券简称：%s，正股价：%s，转股价：%s, 转股价值：%.2f' % (
+                        dayRel[gap],
+                        bond.code,
+                        bond.name,
+                        bond.price if bond.price is not None else "-",
+                        bond.swap_price if bond.swap_price is not None else "-",
+                        bond.swap_value if bond.swap_price is not None else 0.0)
+                if bond.swap_price is not None and bond.swap_value > 90:
                     wx_msg += '  推荐✅'
             else:
-                wx_msg += '- 债券代码：%s，债券简称：%s，正股价：%s，转股价：%s, 转股价值：%s' % (
-                    bond.code, bond.name, bond.price, bond.swap_price, bond.swap_value)
+                wx_send.wx_send(
+                    title='每日可转债', content="bond.public_start_date 不应该为空，请检查代码或API")
+                raise RuntimeError("bond.public_start_date 不应该为空，请检查代码或API")
             wx_msg += '\n\n'
     else:
         wx_msg += '- 无\n\n'
 
-    wx_msg += '今日上市：\n\n'
-    if len(shangshi_bond) > 0:
-        for bond in shangshi_bond:
-            wx_msg += '- 债券代码：% s，债券简称：% s\n\n' % (bond.code, bond.name)
+    wx_msg += '近日上市：\n\n'
+    if len(recently_listing_bonds) > 0:
+        for bond in recently_listing_bonds:
+            gap = (bond.listing_date - today).days
+            if gap < len(dayRel):
+                wx_msg += '- %s: 债券代码：% s，债券简称：% s\n\n' % (
+                    dayRel[gap], bond.code, bond.name)
     else:
         wx_msg += '- 无\n\n'
 
-    if '今日发售' in wx_msg or '今日上市' in wx_msg:
+    if len(recently_public_bonds) > 0 or len(recently_listing_bonds) > 0:
         wx_msg += '[点击详情查看一览表](%s)' % PAGE_URL
         log(wx_msg)
         wx_send.wx_send(title='每日可转债', content=wx_msg)
