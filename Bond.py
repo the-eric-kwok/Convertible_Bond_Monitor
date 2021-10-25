@@ -8,7 +8,7 @@ class Bond:
     _code = ""  # 债券代码
     _public_start_date = None  # 申购日期
     _listing_date = None       # 上市日期
-    _convert_stock_price = None  # 正股价
+    _price = None              # 正股价
     _swap_price = None         # 转股价
 
     def __init__(self, name, code, price, swap_price, public_start_date, listing_date):
