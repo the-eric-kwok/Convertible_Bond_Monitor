@@ -10,9 +10,12 @@ import Bond
 PAGE_URL = "http://data.eastmoney.com/kzz/default.html"
 TARGET_URL = "http://datacenter-web.eastmoney.com/api/data/v1/get"
 PARAMS = {
+    'sortColumns': 'PUBLIC_START_DATE',
+    'sortTypes': -1,
+    'pageSize': 50,
+    'pageNumber': 1,
     'reportName': "RPT_BOND_CB_LIST",
     'columns': "ALL",
-    'quoteColumns': "f229~10~SECURITY_CODE~CONVERT_STOCK_PRICE,f235~10~SECURITY_CODE~TRANSFER_PRICE,f236~10~SECURITY_CODE~TRANSFER_VALUE,f2~10~SECURITY_CODE~CURRENT_BOND_PRICE,f237~10~SECURITY_CODE~TRANSFER_PREMIUM_RATIO,f239~10~SECURITY_CODE~RESALE_TRIG_PRICE,f240~10~SECURITY_CODE~REDEEM_TRIG_PRICE,f23~01~CONVERT_STOCK_CODE~PBV_RATIO",
     'source': "WEB",
     'client': "WEB"
 }
@@ -78,13 +81,12 @@ def main():
         for bond in recently_listing_bonds:
             gap = (bond.listing_date - today).days
             if gap < len(dayRel):
-                wx_msg += '- %s: 债券代码：% s，债券简称：% s\n\n' % (
-                    dayRel[gap], bond.code, bond.name)
+                wx_msg += f'- {dayRel[gap]}: 债券代码：{bond.code}，债券简称：{bond.name}\n\n'
     else:
         wx_msg += '- 无\n\n'
 
     if len(recently_public_bonds) > 0 or len(recently_listing_bonds) > 0:
-        wx_msg += '[点击详情查看一览表](%s)' % PAGE_URL
+        wx_msg += f'⬇️点击下方链接查看一览表⬇️\n{PAGE_URL}'
         log(wx_msg)
         wx_send.wx_send(title='每日可转债', content=wx_msg)
     else:
