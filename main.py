@@ -47,7 +47,7 @@ def main():
                     Bond.Bond(item["SECURITY_NAME_ABBR"], item["SECURITY_CODE"], item["CONVERT_STOCK_PRICE"], item["TRANSFER_PRICE"], item['PUBLIC_START_DATE'], item['LISTING_DATE']))
         if item['LISTING_DATE'] is not None:
             list_date = datetime.datetime.strptime(
-                item['BOND_START_DATE'], '%Y-%m-%d %H:%M:%S').date()
+                item['LISTING_DATE'], '%Y-%m-%d %H:%M:%S').date()
             gap = (list_date - today).days
             if gap >= 0 and gap < 2:
                 recently_listing_bonds.append(
