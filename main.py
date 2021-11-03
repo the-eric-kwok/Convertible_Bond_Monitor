@@ -15,6 +15,7 @@ PARAMS = {
     'pageSize': 50,
     'pageNumber': 1,
     'reportName': "RPT_BOND_CB_LIST",
+    'quoteColumns': "f2~01~CONVERT_STOCK_CODE~CONVERT_STOCK_PRICE,f235~10~SECURITY_CODE~TRANSFER_PRICE,f236~10~SECURITY_CODE~TRANSFER_VALUE,f2~10~SECURITY_CODE~CURRENT_BOND_PRICE,f237~10~SECURITY_CODE~TRANSFER_PREMIUM_RATIO,f239~10~SECURITY_CODE~RESALE_TRIG_PRICE,f240~10~SECURITY_CODE~REDEEM_TRIG_PRICE,f23~01~CONVERT_STOCK_CODE~PBV_RATIO",
     'columns': "ALL",
     'source': "WEB",
     'client': "WEB"
@@ -55,7 +56,7 @@ def main():
     wx_msg = '\n'
     wx_msg += '近日发售：\n\n'
     if len(recently_public_bonds) > 0:
-        for bond in recently_public_bonds:
+        for bond in recently_public_bonds[::-1]:
             if bond.public_start_date is not None:
                 gap = (bond.public_start_date - today).days
                 if gap < len(dayRel):
@@ -66,8 +67,13 @@ def main():
                         bond.price if bond.price is not None else "-",
                         bond.swap_price if bond.swap_price is not None else "-",
                         bond.swap_value if bond.swap_price is not None else 0.0)
-                if bond.swap_price is not None and bond.swap_value > 90:
-                    wx_msg += '  推荐✅'
+                if bond.swap_price is not None:
+                    if bond.swap_value > 97:
+                        wx_msg += '  ✅'
+                    elif bond.swap_value < 90:
+                        wx_msg += '  ❌'
+                    else:
+                        wx_msg += '  ⚠️'
             else:
                 wx_send.wx_send(
                     title='每日可转债', content="bond.public_start_date 不应该为空，请检查代码或API")
@@ -78,7 +84,7 @@ def main():
 
     wx_msg += '近日上市：\n\n'
     if len(recently_listing_bonds) > 0:
-        for bond in recently_listing_bonds:
+        for bond in recently_listing_bonds[::-1]:
             gap = (bond.listing_date - today).days
             if gap < len(dayRel):
                 wx_msg += f'- {dayRel[gap]}: 债券代码：{bond.code}，债券简称：{bond.name}\n\n'
